@@ -12,8 +12,6 @@ var leaderRouter = require('./routes/leaderRouter');
 
 const mongoose = require('mongoose');
 
-const Dishes = require('./models/dishes')
-
 const url = 'mongodb://localhost:27017/conFusion';
 const connect = mongoose.connect(url, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false }); // using mongoose to connect
 
