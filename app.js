@@ -29,7 +29,40 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// so we will add authentication before our client can access data from server. Hence, all the middleware next, can be accessed only if authenticated
+function auth(req, res, next) {
+  console.log(req.headers);
+
+  var authHeader = req.headers.authorization
+
+  if (!authHeader) { // checking that if some authentication is provided by the user or not
+    var err = new Error('You are not authenticated')
+
+    res.setHeader('WWW-Authenticate', 'Basic')
+    err.status = 401 // unauthorized access
+    return next(err) // passing it to the custom error handler by the express generator
+  }
+
+  var auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':') // also supplying the encoding. ':' split will give the username and password
+
+  var username = auth[0]
+  var password = auth[1]
+
+  if (username === 'admin' && password === 'password') {
+    next()
+  }
+  else {
+    var err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    next(err);
+  }
+}
+
+
+app.use(auth)
+app.use(express.static(path.join(__dirname, 'public'))); // this is where we an serve up static files
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
