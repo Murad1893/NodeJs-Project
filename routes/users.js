@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 const bodyParser = require('body-parser')
+var passport = require('passport');
+
 var User = require('../models/users')
 
 var router = express.Router()
@@ -11,72 +13,34 @@ router.get('/', function (req, res, next) {
   res.send('respond with a resource');
 });
 
-router.post('/signup', function (req, res, next) {
-  // checking whether duplicate user already exist
-  User.findOne({ username: req.body.username })
-    .then((user) => {
-      if (user != null) {
-        var err = new Error('User ' + req.body.username + ' already exists')
-        err.status = 403
-        next(err)
+router.post('/signup', (req, res, next) => {
+  // we will use the inbuilt methods of passport local mongoose to creata a new User
+  User.register(new User({ username: req.body.username }),
+    req.body.password, (err, user) => { // a callback function
+      if (err) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.json({ err: err });
       }
       else {
-        return User.create({
-          username: req.body.username,
-          password: req.body.password
-        })
-      }
-    })
-    .then((user) => {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json({ status: 'Registration Successful!', user: user });
-    }, err => next(err)) // to handle the error
-    .catch((err) => next(err))
-})
-
-router.post('/login', (req, res, next) => {
-
-  if (!req.session.user) {
-    var authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      var err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-
-    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    var username = auth[0];
-    var password = auth[1];
-
-    User.findOne({ username: username })
-      .then((user) => {
-        if (user === null) {
-          var err = new Error('User ' + username + ' does not exist!');
-          err.status = 403;
-          return next(err);
-        }
-        else if (user.password !== password) {
-          var err = new Error('Your password is incorrect!');
-          err.status = 403;
-          return next(err);
-        }
-        else if (user.username === username && user.password === password) {
-          req.session.user = 'authenticated';
+        // using passport to authenticate the user
+        passport.authenticate('local')(req, res, () => {
+          // a callback function
           res.statusCode = 200;
-          res.setHeader('Content-Type', 'text/plain');
-          res.end('You are authenticated!')
-        }
-      })
-      .catch((err) => next(err));
-  }
-  else {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('You are already authenticated!');
-  }
+          res.setHeader('Content-Type', 'application/json');
+          // we can check the success property to quickly check that registration done or not
+          res.json({ success: true, status: 'Registration Successful!' });
+        });
+      }
+    });
+});
+
+// if the authenticate is successful then we will go to the req,res callback
+router.post('/login', passport.authenticate('local'), (req, res, next) => {
+  // hence all the authentication is taken care by the passport.authenticate
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ success: true, status: 'You are successfully logged in!' });
 })
 // we are only logging out so no need to send further information
 router.get('/logout', (req, res) => {
