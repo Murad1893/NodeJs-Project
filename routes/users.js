@@ -3,6 +3,7 @@ var router = express.Router();
 const bodyParser = require('body-parser')
 var passport = require('passport');
 
+var authenticate = require('../authenticate')
 var User = require('../models/users')
 
 var router = express.Router()
@@ -35,12 +36,18 @@ router.post('/signup', (req, res, next) => {
     });
 });
 
-// if the authenticate is successful then we will go to the req,res callback
+// when user login is successful then we will assign a token to the user
 router.post('/login', passport.authenticate('local'), (req, res, next) => {
-  // hence all the authentication is taken care by the passport.authenticate
+
+  // userId is sufficient hence keep data in token small
+  // we know that user field will be availble when the user is authenticated
+  var token = authenticate.getToken({ _id: req.user._id, })
+
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
-  res.json({ success: true, status: 'You are successfully logged in!' });
+
+  // also passing the token
+  res.json({ success: true, token: token, status: 'You are successfully logged in!' });
 })
 // we are only logging out so no need to send further information
 router.get('/logout', (req, res) => {

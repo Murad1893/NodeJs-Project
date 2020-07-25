@@ -7,6 +7,7 @@ var session = require('express-session')
 var FileStore = require('session-file-store')(session)
 var passport = require('passport');
 
+var config = require('./config')
 var authenticate = require('./authenticate');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -16,7 +17,7 @@ var leaderRouter = require('./routes/leaderRouter');
 
 const mongoose = require('mongoose');
 
-const url = 'mongodb://localhost:27017/conFusion';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false }); // using mongoose to connect
 
 connect.then((db) => {
@@ -32,40 +33,16 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//app.use(cookieParser('12345-67890-09876-54321')); // using signed cookies. Just to sign and send cookies as encrypted
 
-app.use(session({
-  name: 'session-id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
-
-// the passport will automatically add a req.user inside the req when authenticated and the session and cookies are in place
-// so we only need to check for the presence of req.user() 
 app.use(passport.initialize());
-app.use(passport.session());
 
 // moved to this location so that user can sign up as sign up does not need authentication
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-function auth(req, res, next) {
-  console.log(req.user);
-
-  if (!req.user) {
-    var err = new Error('You are not authenticated!');
-    err.status = 403;
-    next(err);
-  }
-  else {
-    next();
-  }
-}
-
-app.use(auth)
 app.use(express.static(path.join(__dirname, 'public'))); // this is where we an serve up static files
+
+// we will restrict only put, post, delete operations; require authentication
 
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
