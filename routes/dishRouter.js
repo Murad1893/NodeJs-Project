@@ -10,6 +10,8 @@ const dishRouter = express.Router()
 dishRouter.route('/')
   .get((req, res, next) => {
     Dishes.find({}) // finding all the dishes
+      // hence we are now populating the author field in the comments with the user info and then sending the compound document back
+      .populate('comments.author')
       .then((dishes) => {
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json')
@@ -45,6 +47,7 @@ dishRouter.route('/')
 dishRouter.route('/:dishId')
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId) // we can access the id using req.params.dishId
+      .populate('comments.author')
       .then((dish) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -82,6 +85,7 @@ dishRouter.route('/:dishId')
 dishRouter.route('/:dishId/comments') // getting comments for a specific dish
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate('comments.author')
       .then((dish) => {
         if (dish != null) { // checking whether dish exists or not
           res.statusCode = 200;
@@ -100,12 +104,18 @@ dishRouter.route('/:dishId/comments') // getting comments for a specific dish
     Dishes.findById(req.params.dishId) // looking for a specific dish
       .then((dish) => {
         if (dish != null) {
+          // we are obtaining the user_id from the passport jwt authentication strategy
+          req.body.author = req.user._id
           dish.comments.push(req.body); // pushing a new set of comments for the dish
           dish.save() // saving the updating dish here
             .then((dish) => {
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'application/json');
-              res.json(dish);
+              Dishes.findById(dish._id)
+                .populate('comments.author')
+                .then((dish) => {
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.json(dish);
+                })
             }, (err) => next(err));
         }
         else {
@@ -188,9 +198,13 @@ dishRouter.route('/:dishId/comments/:commentId') // getting specific comments fo
           }
           dish.save() //saving the dish
             .then((dish) => {
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'application/json');
-              res.json(dish);
+              Dishes.findById(dish._id)
+                .populate('comments.author')
+                .then((dish) => {
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.json(dish);
+                })
             }, (err) => next(err));
         }
         else if (dish == null) {
@@ -213,9 +227,13 @@ dishRouter.route('/:dishId/comments/:commentId') // getting specific comments fo
           dish.comments.id(req.params.commentId).remove(); // removing the comment
           dish.save()
             .then((dish) => {
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'application/json');
-              res.json(dish);
+              Dishes.findById(dish._id)
+                .populate('comments.author')
+                .then((dish) => {
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.json(dish);
+                })
             }, (err) => next(err));
         }
         else if (dish == null) {

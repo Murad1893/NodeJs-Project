@@ -3,7 +3,16 @@ var Schema = mongoose.Schema
 passportLocalMongoose = require('passport-local-mongoose')
 
 var User = new Schema({
-  admin: { // a new user is not admin. We can specify a user to be an admin
+  // user information can now be retrieved
+  firstname: {
+    type: String,
+    default: ''
+  },
+  lastname: {
+    type: String,
+    default: ''
+  },
+  admin: {
     type: Boolean,
     default: false
   }
