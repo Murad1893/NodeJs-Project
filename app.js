@@ -26,6 +26,19 @@ connect.then((db) => {
 
 var app = express();
 
+// redirecting all requests from insecure http port to secure https
+app.all('*', (req, res, next) => {
+  // checking whether coming to secure port or not
+  if (req.secure) {
+    return next()
+  }
+  else {
+    // req.url will contain the actual path on the server without the hostname
+    // 307 means that target resource resides in a different URI and client must not change the request method on redirection
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort') + req.url);
+  }
+})
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
