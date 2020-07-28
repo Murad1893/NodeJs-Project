@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const bodyParser = require('body-parser')
 var passport = require('passport');
+var cors = require('./cors')
 
 var authenticate = require('../authenticate')
 var User = require('../models/users')
@@ -10,7 +11,7 @@ var router = express.Router()
 router.use(bodyParser.json())
 
 /* GET users listing. */
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find({ admin: false })
     .then((users) => {
       res.statusCode = 200
@@ -20,7 +21,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, ne
     .catch((err) => next(err))
 })
 
-router.post('/signup', (req, res, next) => {
+router.post('/signup', cors.corsWithOptions, (req, res, next) => {
   // we will use the inbuilt methods of passport local mongoose to creata a new User
   User.register(new User({ username: req.body.username }),
     req.body.password, (err, user) => { // a callback function
@@ -57,7 +58,7 @@ router.post('/signup', (req, res, next) => {
 });
 
 // when user login is successful then we will assign a token to the user
-router.post('/login', passport.authenticate('local'), (req, res, next) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res, next) => {
 
   // userId is sufficient hence keep data in token small
   // we know that user field will be availble when the user is authenticated

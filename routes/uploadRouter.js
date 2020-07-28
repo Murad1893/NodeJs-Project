@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const authenticate = require('../authenticate')
 const multer = require('multer');
+const cors = require('./cors')
 
 // we will do some configuration for multer
 var storage = multer.diskStorage({
@@ -36,7 +37,11 @@ const uploadRouter = express.Router()
 uploadRouter.use(bodyParser.json())
 
 uploadRouter.route('/')
-  .post(authenticate.verifyUser, authenticate.
+  .options(cors.corsWithOptions, (req, res) => {
+    // CORS checking
+    res.sendStatus(200);
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.
     // upload single means that we can upload a single file from client side
     // upload will take care of all errors
     verifyAdmin, upload.single('imageFile'), (req, res) => {
@@ -47,19 +52,17 @@ uploadRouter.route('/')
       res.json(req.file);
     })
   // these operations are not allowed
-  .get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  .get(cors.cors, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('GET operation not supported on /imageUpload');
   })
-  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /imageUpload');
   })
-  .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('DELETE operation not supported on /imageUpload');
   })
-
-// we will only 
 
 module.exports = uploadRouter
