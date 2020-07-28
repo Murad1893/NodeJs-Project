@@ -12,6 +12,8 @@ var User = new Schema({
     type: String,
     default: ''
   },
+  // will contain the fbId of the user that has passed the token
+  facebookId: String,
   admin: {
     type: Boolean,
     default: false
