@@ -13,7 +13,7 @@ promoRouter.route('/')
     res.sendStatus(200);
   })
   .get(cors.cors, (req, res, next) => {
-    Promotions.find({}) // finding all the promotions
+    Promotions.find(req.query) // this is done so as to incorporate featured = true query from client side
       .then((promotions) => {
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json')

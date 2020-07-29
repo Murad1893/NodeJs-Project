@@ -36,10 +36,15 @@ favRouter.route('/')
             user: req.user._id,
             dishes: dishArray
           })
-            .then((fav) => {
-              res.statusCode = 200
-              res.setHeader('Content-Type', 'application/json')
-              res.json(fav) // this will send as a json response
+            .then((favorite) => {
+              Favorite.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorites) => {
+                  res.statusCode = 200
+                  res.setHeader('Content-Type', 'application/json')
+                  res.json(favorites)
+                })
             }, (err) => next(err))
             .catch((err) => next(err));
         }
@@ -50,10 +55,15 @@ favRouter.route('/')
             fav.dishes = fav.dishes.concat(dishArray)
           }
           fav.save()
-            .then((fav) => {
-              res.statusCode = 200
-              res.setHeader('Content-Type', 'application/json')
-              res.json(fav) // this will send as a json response
+            .then((favorite) => {
+              Favorite.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorites) => {
+                  res.statusCode = 200
+                  res.setHeader('Content-Type', 'application/json')
+                  res.json(favorites)
+                })
             }, (err) => next(err))
             .catch((err) => next(err));
         }
@@ -62,15 +72,47 @@ favRouter.route('/')
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Favorite.deleteMany({ user: req.user._id })
-      .then((resp) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.json(resp);
+      .then((favorite) => {
+        Favorite.findById(favorite._id)
+          .populate('user')
+          .populate('dishes')
+          .then((favorites) => {
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json')
+            res.json(favorites)
+          })
       }, (err) => next(err))
       .catch((err) => next(err));
   })
 
 favRouter.route('/:dishId')
+  .options(cors.corsWithOptions, (req, res, next) => { res.sendStatus(200); })
+  // to check the list of favorites for a user
+  .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
+    Favorites.findOne({ user: req.user._id })
+      .then((favorites) => {
+        if (!favorites) { // if no favorites exists
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.json({ "exists": false, "favorites": favorites });
+        }
+        else {
+          // checking if dish exists in favorite
+          if (favorites.dishes.indexOf(req.params.dishId) < 0) {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            return res.json({ "exists": false, "favorites": favorites });
+          }
+          else {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            return res.json({ "exists": true, "favorites": favorites });
+          }
+        }
+
+      }, (err) => next(err))
+      .catch((err) => next(err))
+  })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Favorite.findOne({ user: req.user._id }) // checking at least one favorite
       .then((fav) => {
@@ -79,10 +121,15 @@ favRouter.route('/:dishId')
             user: req.user._id,
             dishes: [req.params.dishId]
           })
-            .then((fav) => {
-              res.statusCode = 200
-              res.setHeader('Content-Type', 'application/json')
-              res.json(fav) // this will send as a json response
+            .then((favorite) => {
+              Favorite.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorites) => {
+                  res.statusCode = 200
+                  res.setHeader('Content-Type', 'application/json')
+                  res.json(favorites)
+                })
             }, (err) => next(err))
             .catch((err) => next(err));
         }
@@ -91,10 +138,16 @@ favRouter.route('/:dishId')
             fav.dishes.push(req.params.dishId)
           }
           fav.save()
-            .then((fav) => {
-              res.statusCode = 200
-              res.setHeader('Content-Type', 'application/json')
-              res.json(fav) // this will send as a json response
+            .then((favorite) => {
+              // we need to send the populated information back to react client
+              Favorite.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorites) => {
+                  res.statusCode = 200
+                  res.setHeader('Content-Type', 'application/json')
+                  res.json(favorites)
+                })
             }, (err) => next(err))
             .catch((err) => next(err));
         }
@@ -107,10 +160,15 @@ favRouter.route('/:dishId')
         if (fav.dishes.indexOf(req.params.dishId) !== -1) {
           fav.dishes.splice(fav.dishes.indexOf(req.params.dishId), 1)
           fav.save()
-            .then((fav) => {
-              res.statusCode = 200
-              res.setHeader('Content-Type', 'application/json')
-              res.json(fav) // this will send as a json response
+            .then((favorite) => {
+              Favorite.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorites) => {
+                  res.statusCode = 200
+                  res.setHeader('Content-Type', 'application/json')
+                  res.json(favorites)
+                })
             }, (err) => next(err))
             .catch((err) => next(err));
         }
